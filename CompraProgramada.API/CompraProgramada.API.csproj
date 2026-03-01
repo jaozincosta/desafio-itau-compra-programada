@@ -11,10 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CompraProgramada.Application\CompraProgramada.Application.csproj" />
     <ProjectReference Include="..\CompraProgramada.Infrastructure\CompraProgramada.Infrastructure.csproj" />
   </ItemGroup>
