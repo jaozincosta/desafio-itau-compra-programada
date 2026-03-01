@@ -28,7 +28,7 @@ namespace CompraProgramada.Domain.Entities
         public decimal ValorBase { get; set; }
 
         [Column("valor_ir", TypeName = "decimal(18,2)")]
-        public decimal ValorIr { get; set; }
+        public decimal ValorIR { get; set; }
 
         [Column("publicado_kafka")]
         public bool PublicadoKafka { get; set; }
