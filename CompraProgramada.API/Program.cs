@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // MySQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=localhost;Port=3307;Database=compra_programada;User=root;Password=123;";
+    ?? "Server=localhost;Port=3307;Database=compra_programada;User=root;Password=JMCosta10@;";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -61,7 +61,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
