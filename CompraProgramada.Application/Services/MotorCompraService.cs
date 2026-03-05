@@ -39,11 +39,27 @@ namespace CompraProgramada.Application.Services
         //RN-020 a RN-056: Motor de compra programada - 18 etapas
         public async Task<ExecutarCompraResponse> ExecutarCompraAsync(DateTime dataReferencia)
         {
-            // ETAPA 1: Verificar se e dia de compra (5, 15 ou 25)
-            if (dataReferencia.Day != 5 && dataReferencia.Day != 15 && dataReferencia.Day != 25)
+            // ETAPA 1: Verificar se e dia de compra (5, 15 ou 25) ou proximo dia util
+            var diasCompra = new[] { 5, 15, 25 };
+            bool isDiaCompraValido = false;
+
+            foreach (var diaCompra in diasCompra)
+            {
+                // Calcular o dia util correspondente ao dia de compra no mes da referencia
+                var dataAlvo = new DateTime(dataReferencia.Year, dataReferencia.Month, diaCompra);
+                while (dataAlvo.DayOfWeek == DayOfWeek.Saturday || dataAlvo.DayOfWeek == DayOfWeek.Sunday)
+                    dataAlvo = dataAlvo.AddDays(1);
+
+                if (dataReferencia.Date == dataAlvo.Date)
+                {
+                    isDiaCompraValido = true;
+                    break;
+                }
+            }
+
+            if (!isDiaCompraValido)
                 throw new InvalidOperationException("DATA_INVALIDA_COMPRA");
 
-            //verificar se e dia util (seg-sex)
             if (dataReferencia.DayOfWeek == DayOfWeek.Saturday || dataReferencia.DayOfWeek == DayOfWeek.Sunday)
                 throw new InvalidOperationException("DATA_NAO_UTIL");
 
@@ -155,9 +171,19 @@ namespace CompraProgramada.Application.Services
                 //ETAPA 8: Atualizar custodia master com compras
                 if (custodiasMaster.ContainsKey(item.Ticker))
                 {
-                    custodiasMaster[item.Ticker].Quantidade = quantidadeDisponivel;
-                    custodiasMaster[item.Ticker].PrecoMedio = cotacao;
-                    custodiasMaster[item.Ticker].DataUltimaAtualizacao = DateTime.UtcNow;
+                    var custMaster = custodiasMaster[item.Ticker];
+                    if (custMaster.Quantidade > 0 && quantidadeComprar > 0)
+                    {
+                        custMaster.PrecoMedio = _precoMedioService.CalcularPrecoMedio(
+                            custMaster.Quantidade, custMaster.PrecoMedio,
+                            quantidadeComprar, cotacao);
+                    }
+                    else if (quantidadeComprar > 0)
+                    {
+                        custMaster.PrecoMedio = cotacao;
+                    }
+                    custMaster.Quantidade = quantidadeDisponivel;
+                    custMaster.DataUltimaAtualizacao = DateTime.UtcNow;
                 }
                 else
                 {
@@ -172,6 +198,9 @@ namespace CompraProgramada.Application.Services
                     _context.Custodias.Add(novaCustodia);
                     custodiasMaster[item.Ticker] = novaCustodia;
                 }
+
+                // Salvar ordens para gerar os IDs antes da distribuicao
+                await _context.SaveChangesAsync();
 
                 //ETAPA 9 e 10: Distribuir para clientes proporcionalmente
                 int totalDistribuido = 0;
@@ -222,7 +251,7 @@ namespace CompraProgramada.Application.Services
                     //ETAPA 12: Registrar distribuicao
                     var distribuicao = new Distribuicao
                     {
-                        OrdemCompraId = ordensCompraEntities.FirstOrDefault()?.Id ?? 0,
+                        OrdemCompraId = ordensCompraEntities.LastOrDefault()?.Id ?? 0,
                         CustodiaFilhoteId = contaFilhote.Id,
                         Ticker = item.Ticker,
                         Quantidade = qtdCliente,
@@ -268,8 +297,8 @@ namespace CompraProgramada.Application.Services
                         eventoIR.PublicadoKafka = true;
                         eventosIRPublicados++;
                     }
-                    catch (Exception) {}
-                } 
+                    catch (Exception) { }
+                }
 
                 //ETAPA 15 e 16: Descontar distribuidos e persistir residuos
                 var residuo = quantidadeDisponivel - totalDistribuido;

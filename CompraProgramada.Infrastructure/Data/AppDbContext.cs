@@ -106,7 +106,7 @@ namespace CompraProgramada.Infrastructure.Data
                     Id = 1,
                     ClienteId = null, // Conta Master não tem cliente associado
                     NumeroConta = "MST-000001",
-                    Tipo = "Master",
+                    Tipo = "MASTER",
                     DataCriacao = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 });
         }

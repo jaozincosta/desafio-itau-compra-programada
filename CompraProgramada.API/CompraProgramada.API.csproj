@@ -15,4 +15,9 @@
 		<ProjectReference Include="..\CompraProgramada.Application\CompraProgramada.Application.csproj" />
 		<ProjectReference Include="..\CompraProgramada.Infrastructure\CompraProgramada.Infrastructure.csproj" />
 	</ItemGroup>
+	<ItemGroup>
+		<None Update="cotacoes\**">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>
